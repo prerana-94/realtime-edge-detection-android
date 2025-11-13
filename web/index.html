@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edge Detection Web Viewer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 1200px;
+            width: 100%;
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .content {
+            display: grid;
+            grid-template-columns: 1fr 300px;
+            gap: 30px;
+            padding: 30px;
+        }
+
+        .viewer-section {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        #dropZone {
+            border: 3px dashed #667eea;
+            border-radius: 10px;
+            padding: 40px;
+            text-align: center;
+            background: #f8f9fa;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        #dropZone:hover {
+            background: #e9ecef;
+            border-color: #764ba2;
+        }
+
+        #dropZone.drag-over {
+            background: #667eea;
+            color: white;
+            border-color: white;
+        }
+
+        .canvas-container {
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            background: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 400px;
+        }
+
+        #frameCanvas {
+            max-width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .stats-panel {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+        }
+
+        .stats-panel h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .stat-item:last-child {
+            border-bottom: none;
+        }
+
+        .stat-label {
+            font-weight: 600;
+            color: #495057;
+        }
+
+        .stat-value {
+            color: #667eea;
+            font-family: monospace;
+            font-weight: bold;
+        }
+
+        .controls {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+        }
+
+        .controls h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 12px 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 600;
+            transition: transform 0.2s;
+            margin-bottom: 10px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .info-panel {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+
+        .info-panel h4 {
+            color: #856404;
+            margin-bottom: 10px;
+        }
+
+        .info-panel p {
+            color: #856404;
+            font-size: 0.9em;
+            line-height: 1.6;
+        }
+
+        @media (max-width: 768px) {
+            .content {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>🎨 Edge Detection Viewer</h1>
+        <p>Web-based viewer for processed Android camera frames</p>
+    </div>
+
+    <div class="content">
+        <div class="viewer-section">
+            <div id="dropZone">
+                <h3>📤 Drop Image Here</h3>
+                <p>Drag and drop a processed frame image</p>
+                <p style="margin-top: 10px; color: #6c757d;">or use the button below</p>
+            </div>
+
+            <div class="canvas-container">
+                <canvas id="frameCanvas"></canvas>
+            </div>
+
+            <div class="info-panel">
+                <h4>ℹ️ How to Use</h4>
+                <p>
+                    1. Run the Android app and process some frames<br>
+                    2. Export a processed frame (screenshot or saved image)<br>
+                    3. Drag and drop it here or use the "Load Frame" button<br>
+                    4. View statistics and processed output
+                </p>
+            </div>
+        </div>
+
+        <div class="sidebar">
+            <div class="stats-panel">
+                <h3>📊 Frame Statistics</h3>
+                <div id="statsContainer">
+                    <div class="stat-item">
+                        <span class="stat-label">Resolution:</span>
+                        <span class="stat-value">0 x 0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">FPS:</span>
+                        <span class="stat-value">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Processing Time:</span>
+                        <span class="stat-value">0ms</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Mode:</span>
+                        <span class="stat-value">edge</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="controls">
+                <h3>⚙️ Controls</h3>
+                <input type="file" id="fileInput" accept="image/*">
+                <button class="btn" onclick="document.getElementById('fileInput').click()">
+                    📁 Load Frame
+                </button>
+                <button class="btn" onclick="location.reload()">
+                    🔄 Reset Viewer
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="dist/viewer.js"></script>
+</body>
+</html>
